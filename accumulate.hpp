@@ -8,17 +8,19 @@
 #pragma once
 #include <iostream>
 #include <iterator>
-
 using namespace std;
 
-namespace itertools{
 
+ //מקבל כקלט מיכל או דמוי-מיכל כלשהו. מחזיר דמוי-מיכל חדש הכולל סכומים חלקיים. לדוגמה
+ //accumulate(range(5,9)) מייצג את המספרים 5, 11, 18, 26 (5, 5+6, 5+6+7, 5+6+7+8). וכך גם accumulate(vector({5,6,7,8})).
+
+namespace itertools{
     typedef struct {
     template <typename T>
     auto operator()(const T& a , const T& b) const{
-        return a + b;
-        }
-    } _plus;
+    return a + b;
+    }
+} _plus;
 
     template <typename C, typename F = _plus> 
     class accumulate{
@@ -29,15 +31,13 @@ namespace itertools{
         accumulate(C c, F f = _plus()) : container(c), function(f) {}
 
         class iterator {
-        protected:
-            F function;
-            typename C::iterator iter; 
-            typename C::iterator last;
-            typename decay<decltype(*(container.begin()))>::type data;
+        F function;
+        typename C::iterator iter; 
+        typename C::iterator last;
+        typename decay<decltype(*(container.begin()))>::type data;
             
-
         public:
-            iterator(typename C::iterator first, typename C::iterator l, F fun) : iter(first), last(l), function(fun) {
+            iterator(typename C::iterator first, typename C::iterator l, F f) : iter(first), last(l), function(f) {
                 if (iter != last) 
                     data = *iter;
             }
@@ -85,4 +85,4 @@ namespace itertools{
             return iterator(container.end(), container.end(), function);
         }
     };
-} 
+}
