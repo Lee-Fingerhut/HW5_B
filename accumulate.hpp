@@ -7,71 +7,82 @@
 //
 #pragma once
 #include <iostream>
-#include <vector>
 #include <iterator>
 
 using namespace std;
 
-typedef struct {
-    template <typename S>
-    auto operator()(const S& a , const S& b) const{
-        return a + b;
-    }
-} _plus;
-
 namespace itertools{
-template<class C,class F = _plus>
-class accumulate{
-    const C& container;
-    const F& function;
-public:
-    accumulate(const C& c, const F& f = _plus()) : container(c), function(f){}
-    
-    class iterator {
-        const accumulate& a;
-        decltype(container.begin()) iter;
-        typename std::decay<decltype(*(container.begin()))>::type data;
-        
+
+    typedef struct {
+    template <typename T>
+    auto operator()(const T& a , const T& b) const{
+        return a + b;
+        }
+    } _plus;
+
+    template <typename C, typename F = _plus> 
+    class accumulate{
+        C container;
+        F function;
+
     public:
-        
-        iterator(const accumulate& a, decltype(container.begin()) i)
-        : a(a), iter(i){
-            if (iter != a.container.end())
-                data = *iter;
+        accumulate(C c, F f = _plus()) : container(c), function(f) {}
+
+        class iterator {
+        protected:
+            F function;
+            typename C::iterator iter; 
+            typename C::iterator last;
+            typename decay<decltype(*(container.begin()))>::type data;
+            
+
+        public:
+            iterator(typename C::iterator first, typename C::iterator l, F fun) : iter(first), last(l), function(fun) {
+                if (iter != last) 
+                    data = *iter;
+            }
+
+            // ++i;
+            iterator &operator++(){
+                ++iter;
+                if (iter != last)
+                    data = function(data, *iter);
+                return *this;
+            }
+            // i++;
+            iterator operator++(int){
+                iterator i = *this;
+                ++(*i);
+                return i;
+            }
+            bool operator==(const iterator &other) const{
+                return (iter == other.iter);
+            }
+
+            bool operator!=(const iterator &other) const{
+                return (iter != other.iter);
+            }
+
+            auto operator*() const{
+                return data;
+            }
+
+            iterator &operator=(const iterator &other){
+                if  (*this        != other){
+                    this->iter     = other.it;
+                    this->last     = other.last;
+                    this->data     = other.data;
+                    this->function = other.function;
+                }
+                return *this;
+            }
+        };
+        iterator begin(){
+            return iterator(container.begin(), container.end(), function);
         }
-        
-        auto operator*() const {
-            return data;
-        }
-        iterator& operator++() {
-            ++iter;
-            if(iter != a.container.end())
-                data = a.function(data,*(iter));
-            return *this;
-        }
-        
-        const iterator operator++(int) {
-            iterator temp = *this;
-            if(iter != a.container.end())
-                data = a.function(data,*(iter));
-            return *temp;
-        }
-        
-        bool operator==(const iterator& iterator) const {
-            return iterator.iter==iter;
-        }
-        
-        bool operator!=(const iterator& iterator) const {
-            return iterator.iter!=iter;
+
+        iterator end(){
+            return iterator(container.end(), container.end(), function);
         }
     };
-    
-    iterator begin() const {
-        return iterator(*this,container.begin());
-    }
-    
-    iterator end() const {
-        return iterator(*this, container.end());
-    }
-};
-}
+} 
